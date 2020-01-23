@@ -15,6 +15,10 @@ class ModuleLoader implements SharedService{
 		if (is_array($aliases)) $this->aliases = $aliases;
 	}
 
+	public function loadModules(array $modules){
+		foreach ($modules as $module => $config) $this->loadModule($module, $config);
+	}
+
 	public function loadModule(string $module, $config){
 		$class = array_key_exists($module, $this->aliases) ? $this->aliases[$module] : $module;
 		/** @var \Zenit\Core\Module\Interfaces\ModuleInterface $moduleInstance */
@@ -23,7 +27,7 @@ class ModuleLoader implements SharedService{
 		if (array_key_exists($key, $this->modules)) throw new \Exception('Module already loaded: ' . $key);
 		$this->modules[$key] = $moduleInstance;
 		$this->modules[$module] = $moduleInstance;
-		(function(ModuleInterface $module, $config){$module->load($config);})($moduleInstance, $config);
+		(function (ModuleInterface $module, $config){ $module->load($config); })($moduleInstance, $config);
 		return $moduleInstance;
 	}
 

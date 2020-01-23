@@ -4,6 +4,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Zenit\Bundle\Mission\Component\Cli\CliModule;
+use Zenit\Core\Config;
 
 class Vhost extends CliModule{
 
@@ -17,8 +18,8 @@ class Vhost extends CliModule{
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$style = new SymfonyStyle($input, $output);
 
-		$files = env('vhost-generator');
-		
+		$files = Config::Service()->vhost;
+
 		foreach ($files as $name=>$file){
 			$source = $file['template'];
 			$target = $file['output'];

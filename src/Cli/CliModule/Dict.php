@@ -5,9 +5,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Yaml\Yaml;
 use Zenit\Bundle\Mission\Component\Cli\CliModule;
+use Zenit\Core\Config;
 
 class Dict extends CliModule{
-
+	
+	/** @var Config */
+	protected $config;
+	
 	protected function configure(){
 		$this
 			->setName('dictionary-builder')
@@ -16,11 +20,15 @@ class Dict extends CliModule{
 		;
 	}
 
+	
+	
 	protected function execute(InputInterface $input, OutputInterface $output){
 		$style = new SymfonyStyle($input, $output);
-		$indir = env('dict.source');
+		
+		$this->config = Config::Service();
+	
 
-		$files = glob($indir . '*.yml');
+		$files = glob($this->config->dictSource . '*.yml');
 		foreach ($files as $file) if (is_file($file)){
 			$data = Yaml::parseFile($file);
 
@@ -72,6 +80,8 @@ class Dict extends CliModule{
 			}
 		}
 
+		$root = $this->config->root;
+		
 		foreach ($output as $kind => $target){
 			switch ($kind){
 				case 'php':
@@ -80,17 +90,17 @@ class Dict extends CliModule{
 						$file .= "\tconst " . $key . ' = ' . var_export($value, true) . ';' . "\n";
 					}
 					$file .= '}';
-					if(!is_dir(env('root').'/'.$target['path'])) mkdir(env('root').'/'.$target['path'], 0777, true);
-					file_put_contents(env('root').'/'.$target['path'] .'/'. $target['class'] . '.php', $file);
+					if(!is_dir($root.'/'.$target['path'])) mkdir($root.'/'.$target['path'], 0777, true);
+					file_put_contents($root.'/'.$target['path'] .'/'. $target['class'] . '.php', $file);
 					break;
 				case 'json':
-					if(!is_dir(env('root').'/'.$target['path'])) mkdir(env('root').'/'.$target['path'], 0777, true);
-					file_put_contents(env('root').'/'.$target['path'] .'/'. $target['file'] , json_encode($dictionary, JSON_PRETTY_PRINT));
+					if(!is_dir($root.'/'.$target['path'])) mkdir($root.'/'.$target['path'], 0777, true);
+					file_put_contents($root.'/'.$target['path'] .'/'. $target['file'] , json_encode($dictionary, JSON_PRETTY_PRINT));
 					break;
 				case 'jsmodule':
 					$file = 'let ' . $target['name'] . ' = ' . json_encode($dictionary, JSON_PRETTY_PRINT) . ';' . "\n" . "export default " . $target['name'] . ";";
-					if(!is_dir(env('root').'/'.$target['path'])) mkdir(env('root').'/'.$target['path'], 0777, true);
-					file_put_contents(env('root').'/'.$target['path'] .'/'. $target['file'] , $file);
+					if(!is_dir($root.'/'.$target['path'])) mkdir($root.'/'.$target['path'], 0777, true);
+					file_put_contents($root.'/'.$target['path'] .'/'. $target['file'] , $file);
 					break;
 			}
 		}

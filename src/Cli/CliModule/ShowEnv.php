@@ -4,6 +4,7 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Zenit\Bundle\Mission\Component\Cli\CliModule;
+use Zenit\Core\Env\Component\DotArray;
 use Zenit\Core\Env\Component\EnvLoader;
 
 class ShowEnv extends CliModule{
@@ -15,7 +16,9 @@ class ShowEnv extends CliModule{
 
 	protected function execute(InputInterface $input, OutputInterface $output){
 		$arr = EnvLoader::load();
-		$env = [];
+		$arr = DotArray::flatten($arr);
+		ksort($arr);
+
 		foreach ($arr as $key=>$value){
 			if(!is_array($value)) $env[] = [$key, $value];
 		}
