@@ -10,42 +10,25 @@ use Zenit\Bundle\Mission\Component\Cli\CliModule;
 use Zenit\Core\Config;
 use Zenit\Core\ServiceManager\Component\ServiceContainer;
 
-class Bundler extends CliModule{
+class ConstantGenerator extends CliModule{
 	
 	/** @var Config */
 	protected $config;
 	
 	protected function configure(){
 		$this
-			->setName('bundler')
-			->setDescription('bundler')
+			->setName('constantgenerator')
+			->setAliases(['cg'])
+			->setDescription('compose constants')
 		;
 	}
 
-	
-	
 	protected function execute(InputInterface $input, OutputInterface $output){
 		$style = new SymfonyStyle($input, $output);
-
-		$files = glob(env('root').'/*/*.php');
-		print_r($files);
-
-		//$this->seek(env('root'));
-		echo "done\n";
+		$classes = $this->config;
+		foreach ($classes as $class)$class::generate();
+		$style->success('done');
 	}
-	
-	protected function seek($path, $pattern = '*'){
-		echo $path."\n";
-		$files = glob($path.'/'.$pattern);
-		foreach ($files as $file){
-			if(is_file($file)){
-				echo $file."\n";
-			}
-		}
-		$dirs = glob($path.'/*', GLOB_ONLYDIR);
-		foreach ($dirs as $dir){
-			$this->seek($dir, $pattern);
-		}
-	}
+
 
 }

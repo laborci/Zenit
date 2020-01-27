@@ -18,7 +18,7 @@ class Vhost extends CliModule{
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$style = new SymfonyStyle($input, $output);
 
-		$files = Config::Service()->vhost;
+		$files = $this->config;
 
 		foreach ($files as $name=>$file){
 			$source = $file['template'];
