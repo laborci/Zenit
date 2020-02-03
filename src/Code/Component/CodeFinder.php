@@ -1,10 +1,14 @@
-<?php namespace Zenit\Core\CodeWriter\Component;
+<?php namespace Zenit\Core\Code\Component;
 
 use Composer\Autoload\ClassLoader;
+use Zenit\Core\ServiceManager\Component\Service;
 use Zenit\Core\ServiceManager\Component\ServiceContainer;
+use Zenit\Core\ServiceManager\Interfaces\SharedService;
 
-class CodeWriter{
+class CodeFinder implements SharedService{
 
+	use Service;
+	
 	public function Psr4ClassSeeker($namespace, $pattern = '*.php'){
 		$path = $this->Psr4ResolveNamespace($namespace);
 		return array_map(
@@ -32,7 +36,6 @@ class CodeWriter{
 		/** @var ClassLoader $cl */
 		$cl = ServiceContainer::get(ClassLoader::class);
 		$prefixesPsr4 = $cl->getPrefixesPsr4();
-
 		$segments = explode('\\', $name);
 		$relpath = [];
 		$path = null;
@@ -40,7 +43,9 @@ class CodeWriter{
 		do{
 			$ns = join('\\', $segments) . '\\';
 			$path = array_key_exists($ns, $prefixesPsr4) ? $prefixesPsr4[$ns][0] : null;
-			if (!is_null($path)) return realpath($path . "/" . join("/", $relpath));
+			if (!is_null($path)){
+				return ($path . "/" . join("/", $relpath));
+			}
 			array_unshift($relpath, array_pop($segments));
 		}while (!empty($segments));
 

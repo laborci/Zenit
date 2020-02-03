@@ -9,7 +9,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Yaml\Yaml;
 use Zenit\Bundle\Mission\Component\Cli\CliModule;
-use Zenit\Core\CodeWriter\Component\CodeWriter;
+use Zenit\Core\Code\Component\CodeFinder;
 use Zenit\Core\Config;
 use Zenit\Core\ServiceManager\Component\ServiceContainer;
 
@@ -42,7 +42,7 @@ class ApiExtractor extends CliModule{
 		$namespace = $api['namespace'];
 		$path = $api['path'];
 
-		$cw = new CodeWriter();
+		$cw = CodeFinder::Service();
 		$classes = $cw->Psr4ClassSeeker($namespace);
 
 		$endpoints = [];

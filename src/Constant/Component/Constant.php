@@ -22,7 +22,7 @@ class Constant{
 		$consts = [];
 		foreach ($constants as $constant){
 			$key = static::key($constant);
-			$value = static::value($constant, $annotations->get('prefix') ?: str_replace("\\", ".", get_called_class()));
+			$value = static::value($constant, $annotations->get('prefix'));
 			$consts[$key] = $value;
 		}
 
@@ -32,7 +32,10 @@ class Constant{
 
 	protected static function key($string){ return CaseHelperFactory::make(CaseHelperFactory::INPUT_TYPE_SNAKE_CASE)->toPascalCase(strtr($string, ' -', '__')); }
 
-	protected static function value($string, $prefix){ return $prefix . '.' . static::key($string); }
+	protected static function value($string, $prefix){
+		if($prefix === null) $prefix = str_replace("\\", ".", get_called_class());
+		return ($prefix ? $prefix . '.' : '') . static::key($string);
+	}
 
 	private static function generateJs($consts, $defaultAs, $jss){
 		$jss = array_map(function ($js) use ($defaultAs){ return $js . (strpos($js, ' as ') === false ? ' as ' . $defaultAs : ''); }, $jss);

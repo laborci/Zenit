@@ -25,10 +25,9 @@ class StartupSequence{
 		putenv('ini-file=' . basename($ini));
 
 		if (!EnvLoader::checkCache()) EnvLoader::save();
-		EnvLoader::save();
 		Env::Service()->store(include getenv('env-file'));
 		Env::Service()->set('root', getenv('root'));
-		Env::Service()->set('context', getenv('context'));
+		Env::Service()->set('sys.context', getenv('context'));
 
 		$config = Config::Service();
 
