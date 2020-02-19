@@ -11,6 +11,7 @@ use Symfony\Component\Yaml\Yaml;
 use Zenit\Bundle\Mission\Component\Cli\CliModule;
 use Zenit\Core\Code\Component\CodeFinder;
 use Zenit\Core\Config;
+use Zenit\Core\Env\Component\DotArray;
 use Zenit\Core\ServiceManager\Component\ServiceContainer;
 
 class ApiExtractor extends CliModule{
@@ -55,6 +56,9 @@ class ApiExtractor extends CliModule{
 			$reflection = new \ReflectionClass($class);
 			/** @var \ReflectionMethod $classMethod */
 			$methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
+			$prefix = $reader->getClassAnnotations($class)->get('endpoint-prefix', false);
+			echo $class.' ';
+			echo $prefix."\n";
 
 			foreach ($methods as $method){
 				$on = $reader->getAnnotations($method)->get('on');
@@ -62,7 +66,7 @@ class ApiExtractor extends CliModule{
 				$name = $reader->getAnnotations($method)->get('endpoint');
 				if ( ($accepts || $on) && $name){
 					$endpoint = [
-						'name'     => $name,
+						'name'     => ($prefix ? $prefix.'.' : '').$name,
 						'url'      => join('/', $url) . ($on ? '' : '/' . CaseHelperFactory::make(CaseHelperFactory::INPUT_TYPE_PASCAL_CASE)->toKebabCase($method->getName())),
 						'params'   => array_column(array_map(function (\ReflectionParameter $parameter){ return [$parameter->getName(), $parameter->isOptional()]; }, $method->getParameters()), 1, 0),
 						'required' => $method->getNumberOfRequiredParameters(),
@@ -73,7 +77,7 @@ class ApiExtractor extends CliModule{
 		}
 
 		$endpointMethods = [];
-		foreach ($endpoints as $endpoint){
+		foreach ($endpoints as $key=>$endpoint){
 			$endpointMethod = '';
 
 			$endpointMethod = "\t/**\n";
@@ -81,19 +85,35 @@ class ApiExtractor extends CliModule{
 			$endpointMethod .= "\t * @return {string}\n";
 			$endpointMethod .= "\t */\n";
 
-			$endpointMethod .= "\t" . $endpoint['name'] . ": function(" . join(", ", array_keys($endpoint['params'])) . "){\n";
+			$endpointMethod .= "\t" . " function(" . join(", ", array_keys($endpoint['params'])) . "){\n";
 			if ($endpoint['required']) $endpointMethod .= "\t\tif(arguments.length < " . $endpoint['required'] . ") throw new Error();\n";
 			$endpointMethod .= "\t\treturn \"/" . $endpoint['url'] . (!empty($endpoint['params']) ? "/\" + [...arguments].join('/')" : "\"") . ";\n";
 			$endpointMethod .= "\t}";
-			$endpointMethods[] = $endpointMethod;
+			$endpointMethods[$key] = $endpointMethod;
+		}
+
+		dump($endpointMethods);
+		$keys = array_keys($endpointMethods);
+		$m = [];
+		foreach ($keys as $key){
+			DotArray::set($m, $key, '{{'.$key.'}}');
 		}
 
 
 
 		foreach ($api['extract'] as $extract){
+
+
+
 			$file = $extract['file'];
 			$as = $extract['as'];
-			file_put_contents( $file, "let " . $as . " = {\n" . join(",\n", $endpointMethods) . "\n};\nexport default " . $as . ";");
+
+			$output = "let " . $as . " = ".json_encode($m, JSON_PRETTY_PRINT).";\nexport default " . $as . ";";
+			foreach ($endpointMethods as $name=>$endpointMethod){
+				$output = str_replace('"{{'.$name.'}}"', "\n".$endpointMethod."\n\t\t", $output);
+			}
+			//file_put_contents( $file, "let " . $as . " = {\n" . join(",\n", $endpointMethods) . "\n};\nexport default " . $as . ";");
+			file_put_contents( $file,$output);
 		}
 	}
 
